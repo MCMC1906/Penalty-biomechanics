@@ -1,0 +1,40 @@
+# Python 3.12
+#
+# Versions are pinned to the ones used to produce the published results.
+# Install with:
+#     pip install -r requirements.txt
+#
+# This installs the CPU build of PyTorch. For an NVIDIA GPU, install torch
+# separately from the PyTorch index afterwards, e.g. for CUDA 12.1:
+#     pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cu121
+# The "+cu121" local version tag must NOT appear in this file: those builds
+# are not on PyPI, and pinning it here makes `pip install -r` fail outright.
+
+# 01_extraction -- kicker detection/tracking (clips_creator.py)
+opencv-python==5.0.0.93
+ultralytics==8.4.101
+
+# 02_biomechanics -- pose estimation (pose_extractor.py; also uses opencv)
+#
+# Pinned, not floated. This is the dependency that decides every measurement in
+# the project: a different pose model produces different landmarks, so a
+# floating version silently changes all the numbers. It was the only unpinned
+# requirement.
+mediapipe==0.10.14
+
+# 03_statistical_analysis / 04_models -- data, statistics, ML/DL
+numpy==2.4.6
+pandas==3.0.3
+scipy==1.18.0
+scikit-learn==1.9.0
+xgboost==3.3.0          # tabular_models.py, reg_cross_analysis.py
+shap==0.52.0            # interpretable_model.py (optional -- the script skips
+                        # the SHAP section with a warning if it is missing)
+torch==2.5.1            # deep_learning_models.py -- see the CUDA note above
+                        # NOTE: this pin is older than the rest of the file.
+                        # Verify in a clean venv that it resolves alongside
+                        # numpy 2.4 / pandas 3.0 before relying on it.
+
+# plots
+matplotlib==3.11.1
+seaborn==0.13.2         # statistical_tests_fase1.py, bio_analysis.py
