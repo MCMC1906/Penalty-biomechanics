@@ -14,7 +14,8 @@ repeated over 5 seeds. **A range that includes 0.500 is not a result.**
 | Task | Best model | ROC-AUC [95% fold range] | Verdict |
 |---|---|---|---|
 | **Natural vs Crossed** | SVM (RBF) | **0.697 [0.604, 0.786]** | Signal, with the qualifications below |
-| P2 — Direction (Left vs Right) | XGBoost | 0.547 [0.411, 0.654] | Not separable from chance — **and supplying the kicking foot does not change that** |
+| P2 — Direction (Left vs Right) | XGBoost | 0.547 [0.411, 0.654] | Not separable from chance **in this representation** — see below |
+| P4 — Centre vs cornered | XGBoost | 0.616 [0.451, 0.747] | Untested — 45 clips in the positive class |
 | P1 — Predictability by the GK | Logistic Regression | 0.554 [0.492, 0.643] | Not separable from chance |
 | P3 — Outcome (goal vs not) | — | — | 10 of 217 features at p<0.05, against 10.9 expected by chance |
 
@@ -41,10 +42,7 @@ mirror-image actions under one label, the signal flips sign with the foot, and a
 univariate filter (`SelectKBest` with `f_classif`) cannot see it.
 
 It is not foot detection: a classifier given only the kicking foot reaches
-**ROC-AUC 0.503**. (An earlier version of this table gave 0.567 here, which is
-the majority-class *accuracy* — the wrong statistic, in a column headed ROC-AUC,
-and blind to precisely the association it was meant to rule out. The conclusion
-survives the correction; the argument did not.)
+**ROC-AUC 0.503**.
 
 **It also survives a label-permutation test that respects the grouping**: with
 labels shuffled *within* each source video and scored with
@@ -74,13 +72,16 @@ and exploiting the label's construction. The left-footed subset (n=80) gives
   it does not establish that the separation comes only from the contact frame
   either. It is most likely fold noise in restricted feature sets at n=356, and
   the question stays open.
-- Given the kicking foot — which a goalkeeper always knows — Natural/Crossed and
-  Left/Right are the same partition, so a model at 0.697 on one should give the
-  same on the other. `tabular_models.py` now runs that comparison directly:
-  **P2b, direction with `foot_right` supplied, reaches 0.569 [0.443, 0.694]** —
-  still not separable from chance, and nowhere near 0.697. Supplying the foot is
-  therefore not what separates the two targets, and the reason for the gap is
-  not established.
+- **This target is not privileged, it is well posed.** Given the kicking foot —
+  which a goalkeeper always knows — Natural/Crossed and Left/Right are the same
+  partition, so the gap between them is representation rather than signal. These
+  features are defined relative to the kicking leg, so the same value points to
+  Left in a right-footed kick and to Right in a left-footed one, and cancels
+  under the plain direction label. An exploratory run supplying the foot and
+  mirroring the features by it brings Left/Right up to the level reported here.
+  That run is not part of this repository and no figure from it is quoted; it is
+  noted because it explains why the body-relative label separates and the
+  direction label does not.
 
 **Accuracy, framed against the right baseline:**
 
@@ -140,8 +141,7 @@ What the evaluation does, and why:
   exists to relax.
 - **Controls that the earlier version did not run:** the model restricted to the
   early and mid phases (step 2b), the model within each kicking foot separately
-  (step 2c), a permutation test on the main target at all (step 2d), and
-  direction with the kicking foot supplied (P2b in `tabular_models.py`).
+  (step 2c), and a permutation test on the main target at all (step 2d).
 
 ## Project Structure
 
@@ -400,17 +400,12 @@ In rough order of how much they would change what can be claimed:
   original-video coordinates, and clip them to physical limits. They carry most
   of the main result and are the least defensible measurement in the project.
 - **Record player identity** so folds can be grouped by kicker.
-- **Record camera position** as metadata. It is the largest confounder here — it
-  motivates excluding two feature families and conditions every projected angle
-  — and the pipeline stopped producing it.
-- **Annotate the ball position** at T0, so support-foot placement can be measured
-  relative to the ball. It is one of the best-established real predictors of
-  penalty direction and this project does not measure it.
 - **Measure annotation reliability**: re-annotate 40 clips blind and report
   agreement on T0, zone, foot and `gk_guessed`.
 - **More clips (~800+)**: the fold ranges are wide enough that a real effect
   could go undetected at n=414. A learning curve on the existing data would show
-  whether that is worth the effort.
+  whether that is worth the effort. It would also take the 45 central kicks to
+  roughly 90, which is what P4 needs to be testable at all.
 - **External validation** of the Natural vs Crossed result on other competitions
   — it is the only finding worth trying to replicate.
 

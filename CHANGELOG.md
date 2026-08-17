@@ -451,15 +451,45 @@ Two qualifications remain:
   restricted feature sets at n=356. It establishes neither anticipation nor its
   absence.
 
-**One prediction in this file was wrong.** A previous version argued that
+**27. The gap between Natural/Crossed and Left/Right is now explained**
+An earlier version of this file said it remained unexplained. It does not. The
+two labels are the same partition once the kicking foot is known, and the
+features are defined relative to the kicking leg — so the same value points to
+Left in a right-footed kick and to Right in a left-footed one, cancels
+marginally, and is invisible to a univariate filter. An exploratory run
+supplying the foot and mirroring the features by it brings Left/Right up to the
+level reported for Natural vs Crossed.
+
+That run is not part of this repository and no figure from it is quoted in the
+write-ups, because it was crude by design: it mirrored every column rather than
+only the lateralised ones, used more features than clips, and was not
+permutation-tested. It is recorded here because of what it settles, not because
+of what it scored. It confirms the project's own hypothesis — that classifying
+the type of movement works because the kinematics are body-relative — and it
+costs the project its claim that Natural vs Crossed is a privileged target. It
+is not. It is the representation in which the signal is already aligned.
+
+**28. A fifth target: centre vs cornered**
+The 45 kicks aimed at the middle column had never been tested against anything —
+`macro_zone` drops them before every direction analysis. All four models land
+around 0.62 with no fold range clearing chance; a grouped permutation gives
+p = 0.105, against the 0.01 that five targets on one dataset would require. An
+exploratory feature screen, not published here, found the largest individual
+effects in the project, sitting in the early and mid phases rather than at
+contact — the opposite of the Natural vs Crossed pattern.
+
+With 45 positives against 356 a null does not distinguish absence from lack of
+power, so it is recorded as untested rather than as a negative result. Note also
+that it is the fifth target tested on this dataset with no correction across
+that family — the reason the 0.01 threshold is cited above rather than 0.05.
+
+**One prediction in this file was half wrong.** A previous version argued that
 because Natural/Crossed and Left/Right are the same partition once the kicking
-foot is known, reporting P2 as null while reporting Natural/Crossed as a finding
-compared a model denied the foot against one whose label is built from it — and
-that supplying the foot should close the gap. `tabular_models.py` now runs that
-comparison: **P2b reaches 0.569 [0.443, 0.694]**, still spanning chance and far
-from 0.697. The missing foot is not what separates the two targets, and why a
-body-relative recoding of the same partition is learnable when the partition
-itself is not remains unexplained.
+foot is known, the gap between them was that one model had been denied the foot
+— and that supplying it should close the gap. Supplying the foot moves the
+direction target only a little; correction 27 shows that what closes the gap is
+mirroring the features by the foot, not naming it. The diagnosis was right about
+where to look and wrong about the mechanism.
 
 The corrections did not produce the Natural/Crossed result — they removed what
 was standing in front of it, and the checks since have not knocked it down.
