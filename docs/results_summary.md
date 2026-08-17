@@ -67,11 +67,6 @@ each source video, so the null preserves the group structure rather than
 assuming clips are independent, the observed 0.697 is beaten by 1 of 200
 shuffles (**p = 0.005**).
 
-*(An earlier version of this table gave 0.567 in this row,
-which is the majority-class accuracy, not an AUC. Accuracy is blind to exactly
-this association, so the argument did not support the conclusion even though the
-conclusion holds.)*
-
 **Statistical support:** 35 of 217 features reach p < 0.05 (against 10.9
 expected by chance), **11 survive BH-FDR and 6 survive Bonferroni**. This is
 the only target where anything survives Bonferroni.
@@ -104,6 +99,11 @@ Two further qualifications:
   it is fold noise in restricted feature sets at n=356. The frame-level tests
   still put every surviving signal at frames 18–19, and that remains the basis
   for the "no usable anticipation" conclusion.
+
+  *Not monotone: adding the mid phase is worse than the early phase alone. Most
+  likely fold noise at n=356 — it establishes neither anticipation nor its
+  absence.*
+
 - **Correction is within-target, not study-wide.** This is the fourth target,
   defined after three null ones. At 0.05/868 across the study, the two surviving
   angle features (p ≈ 0.00015) would not survive.
@@ -133,16 +133,6 @@ performs it. Mechanically, the direction signal flips sign with the foot, and
 `SelectKBest` with `f_classif` is a univariate filter — no feature has a
 marginal association with Left/Right, so the interaction never reaches the
 classifier.
-
-**A corollary that was drawn, and then tested.** Given the kicking foot — which
-a goalkeeper always knows — Natural/Crossed and Left/Right are the same
-partition, so a model at 0.697 on one ought to give the same on the other, and
-"P2 is not separable from chance" looked like a statement about a model that had
-been denied the foot. `tabular_models.py` now runs that comparison directly:
-**P2b, direction with `foot_right` supplied, reaches 0.569 [0.443, 0.694]** —
-still spanning chance, and far from 0.697. So the missing foot is not what
-separates the two targets. Why a body-relative recoding of the same partition is
-learnable when the partition itself is not remains unexplained.
 
 **Accuracy against the right baseline:**
 
@@ -236,8 +226,16 @@ exist.*
 ## P2 — Kick Direction (Left vs Right)
 
 **XGBoost, ROC-AUC 0.547 [0.411, 0.654].** Grouped by source video: 0.557.
-Supplying the kicking foot as a feature (P2b) does not rescue it: **0.569
-[0.443, 0.694]**, still spanning chance.
+
+**This is a null result for this representation, not a claim that the direction
+of a penalty cannot be predicted from these features.** Left/Right and Natural
+vs Crossed are the same partition once the kicking foot is known, and the
+features are defined relative to the kicking leg — so the same value points to
+Left in a right-footed kick and to Right in a left-footed one, and cancels. An
+exploratory run supplying the foot and mirroring the features by it brings this
+target up to the level reported for Natural vs Crossed. That run is not part of
+this repository and no figure from it is quoted here; it is noted because it
+explains why the body-relative label separates and this one does not.
 
 20 of 217 features reach p < 0.05 against 10.9 expected by chance, and **nothing
 survives Bonferroni or FDR** (smallest q = 0.168). The largest effect size is
@@ -255,6 +253,33 @@ that an effect the size of the Natural vs Crossed one could go undetected.
 Player identity in the metadata, so folds can be grouped by kicker. Crop
 geometry, so translation features can be measured in a fixed reference frame
 rather than inside the moving crop.
+
+---
+
+## P4 — Centre vs cornered: a lead, not a result
+
+The 45 kicks aimed at the middle column of the goal sit outside every other
+direction analysis here: `macro_zone` covers only the corner and side zones, so
+those clips are dropped before P2 and before Natural vs Crossed. This target
+puts them back in, and it does not depend on the kicking foot — so none of the
+representation problem above applies.
+
+All four models land around **0.62**, and **none of them clears chance**: the
+best fold range is [0.475, 0.776]. The grouped label permutation gives
+p = 0.105, well short of the 0.01 that five targets on one dataset would
+require.
+
+An exploratory feature screen, not part of this repository, found the strongest
+individual effects of any target here, concentrated in the early and mid phases
+rather than at contact. That is the opposite of the Natural vs Crossed pattern
+and would be genuine anticipation if it held up — which is the reason this is
+worth returning to, and not a reason to believe it yet.
+
+**It is untested rather than negative.** With 45 clips in the positive class
+against 356, a null does not distinguish "no signal" from "not enough clips",
+and the asymmetry runs one way: a clear positive would have meant something, an
+absence means very little. At ~800 clips this becomes ~90 central kicks and
+becomes testable, and it is the first thing worth running if the dataset grows.
 
 ---
 
@@ -310,5 +335,8 @@ accuracy on these 356 kicks is 48.9%, and only one assignment reproduces that �
   best model was smaller than the fold-to-fold spread. An earlier version
   concluded that SVM underperformed Random Forest on Natural vs Crossed; under
   repeated CV the ordering reverses, and the difference is noise either way.
-- **Mirror augmentation** — discussed in earlier versions of this document but
-  never implemented, for either target.
+- **Mirror augmentation as a training technique** — still not implemented. It
+  was used once, in a small and deliberately crude form, purely as a diagnostic
+  to establish that Natural vs Crossed and P2 are the same result in two
+  representations. That run mirrored every column rather than only the
+  lateralised ones and is not part of any model reported here.
