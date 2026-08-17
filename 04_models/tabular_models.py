@@ -1,7 +1,8 @@
 """
 tabular_models.py
 =================
-Tabular models to predict kick direction (P2) and predictability by the GK (P1).
+Tabular models for three targets: kick direction (P2), whether the kick went
+down the middle rather than to a corner (P4), and predictability by the GK (P1).
 
 Models tested:
   - Logistic Regression (L2)   -- linear baseline
@@ -192,23 +193,30 @@ def main():
                               'P2 -- Direction (Left vs Right)',
                               run_perm=not args.no_perm, args=args)
 
-    # P2 again, this time allowed to see the kicking foot.
+    # P4: centre vs cornered.
     #
-    # foot_right is normally excluded as target-adjacent metadata, and for a
-    # plain "which side" question that is right. But the Natural/Crossed target
-    # is the XOR of the foot with the side, so a model that scores 0.70 there
-    # gives a goalkeeper -- who always knows the foot -- the side at the same
-    # rate. Reporting P2 as a null result while reporting Natural/Crossed as a
-    # finding therefore compares a model denied the foot against one whose
-    # label is built from it. The features are body-relative, so the direction
-    # signal flips sign with the foot and a univariate filter (SelectKBest with
-    # f_classif) cannot see it; supplying the foot restores the interaction.
-    # This run is the fair comparison, and it is what the P2 verdict should be
-    # read against.
-    all_results += run_target(df, features, 'macro_zone', 'Left', 'Right',
-                              'P2b -- Direction, foot supplied',
-                              run_perm=not args.no_perm, args=args,
-                              extra_features=('foot_right',))
+    # The 45 kicks aimed at the middle column of the goal (zones 2, 5, 8) sit
+    # outside every other direction analysis in this project -- macro_zone
+    # covers only the corner and side zones, so those clips are dropped before
+    # P2 and before Natural vs Crossed. This target puts them back in.
+    #
+    # It is the better-posed of the direction questions in one respect: it does
+    # not depend on the kicking foot, so there is no XOR, no interaction to
+    # unfold, and none of the representation problem that made Left/Right look
+    # null. Going down the middle is a squarer, less rotated action, so the
+    # mechanism is specific enough to check against the feature screen.
+    #
+    # READ IT WITH THE CLASS BALANCE IN VIEW. 45 positives against 356 is
+    # roughly 1:7, so the fold ranges will be wide whatever happens, and a null
+    # here does not distinguish "no signal" from "not enough clips". Only a
+    # clear positive would mean anything. This is also the fifth target tested
+    # on this dataset, so a permutation p-value should be read against 0.01
+    # rather than 0.05.
+    df['zone_group'] = df['macro_zone'].map(
+        {'Center': 'Centre', 'Left': 'Cornered', 'Right': 'Cornered'})
+    all_results += run_target(df, features, 'zone_group', 'Centre', 'Cornered',
+                              'P4 -- Centre vs cornered',
+                              run_perm=not args.no_perm, args=args)
 
     all_results += run_target(df, features, 'gk_guessed', 1, 0,
                               'P1 -- Predictability (gk_guessed)',
