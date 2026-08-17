@@ -93,6 +93,10 @@ body-relative action whichever foot performs it — the leg swinging across the
 torso. "Left vs Right" merges two mirror-image actions under one label and the
 signal cancels.
 
+That cancellation can be undone by changing the representation rather than the
+data — see section 4. Natural vs Crossed is therefore not a privileged target;
+it is the framing in which the signal is already aligned.
+
 **Accuracy, framed against the right baseline:**
 
 | Reference | Accuracy |
@@ -138,8 +142,16 @@ targets, with every fold range spanning chance.*
 ## 4. Kick Direction (P2) — no detectable signal
 
 **XGBoost, ROC-AUC 0.547 [0.411, 0.654].** Grouped by source video: 0.557.
-Supplying the kicking foot as a feature does not rescue it: **0.569 [0.443,
-0.694]**, still spanning chance.
+
+**This is a null result for this representation, not a claim that direction
+cannot be predicted from these features.** Left/Right and Natural vs Crossed are
+the same partition once the kicking foot is known, and the features are defined
+relative to the kicking leg, so the direction signal flips sign with the foot
+and cancels under this label. An exploratory run supplying the foot and
+mirroring the features by it brings this target up to the level reported for
+Natural vs Crossed in section 2. That run is not part of this repository and no
+figure from it is quoted here; it is noted because it explains why the
+body-relative label separates and this one does not.
 
 Statistical tests: 20 of 217 features reach p < 0.05, against **10.9 expected
 by chance**. **Nothing survives Bonferroni or FDR** (smallest q = 0.168). The
@@ -152,6 +164,30 @@ rather than model capacity — was right. What the corrected analysis adds is
 that the signal is not weak but absent at this sample size, and that PR-AUC was
 the wrong metric to see it with: on a 53/47 split it sits at the class
 prevalence and drifts above it under fold noise.
+
+## 4b. Centre vs cornered (P4) — a lead, not a result
+
+The 45 kicks aimed at the middle column of the goal sit outside every other
+direction analysis in this project: `macro_zone` covers only the corner and side
+zones, so they are dropped before P2 and before Natural vs Crossed. This target
+puts them back in, and unlike the others it does not depend on the kicking foot,
+so none of the representation problem in section 2 applies.
+
+All four models land around **0.62** and **none clears chance** — the best fold
+range is [0.475, 0.776]. The grouped label permutation gives p = 0.105, well
+short of the 0.01 that five targets on one dataset would require.
+
+An exploratory feature screen, not part of this repository, found the strongest
+individual effects of any target in this project, and found them in the **early
+and mid phases** rather than at contact. That is the opposite of the Natural vs
+Crossed pattern, and would be genuine anticipation if it held up. It is the
+reason this target is worth returning to; it is not a reason to believe it yet.
+
+**Read this as untested, not as negative.** With 45 clips in the positive class
+against 356, a null does not distinguish "no signal" from "not enough clips",
+and the asymmetry runs one way: a clear positive would have meant something, an
+absence means very little. At ~800 clips this becomes ~90 central kicks and
+becomes testable. It is the first thing worth running if the dataset grows.
 
 ## 5. Outcome (P3) — nothing
 
@@ -211,7 +247,6 @@ practice, barely better than a coin flip.
 - **Hyperparameter tuning SVM:** unstable across folds, C=1 default already optimal
 - **Deep learning, both targets:** 414 clips do not support the extra capacity; LSTM and CNN 1D sit at chance
 - **Translation features as physical quantities:** measured inside the tracking crop, so they capture tracker lag rather than ground speed
-- **Mirror augmentation:** discussed in earlier versions of this report but never implemented, for either target
 
 ## 9. Practical Implications
 
@@ -228,11 +263,11 @@ and a dive takes ~200 ms to initiate.
 
 **For kickers.** The clearest actionable finding is the reverse of the original
 question: kickers who keep the kicking-leg hip more extended through the late
-swing are measurably harder to read.
+swing are harder to read.
 
 ## 10. What this project shows
 
-Across 217 features and three research questions, the body does **not** reliably
+Across 217 features and five targets, the body does **not** reliably
 betray where a penalty is going, and nothing measurable before contact predicts
 whether it is scored. What it does betray, robustly enough to survive grouping
 by source video and Bonferroni correction, is whether the kick is **natural or
